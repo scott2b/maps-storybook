@@ -1,0 +1,56 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": [".storybook/main.ts", ".storybook/preview.ts"],
+      "project": [".storybook/**/*.{ts,js}"]
+    },
+    "packages/ui-core": {
+      "entry": ["src/index.ts", "**/*.test.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/ui-react": {
+      "entry": [
+        "src/index.ts",
+        "**/*.stories.{ts,tsx}",
+        "**/*.test.{ts,tsx}",
+        ".storybook/main.ts",
+        ".storybook/preview.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "stories/**/*.{ts,tsx}", ".storybook/**/*.ts"]
+    },
+    "packages/ui-svelte": {
+      "entry": [
+        "src/index.ts",
+        "**/*.stories.{ts,tsx}",
+        "**/*.test.{ts,tsx}",
+        ".storybook/main.ts",
+        ".storybook/preview.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx,svelte}", "stories/**/*.{ts,tsx}", ".storybook/**/*.ts"]
+    },
+    "packages/ui-webcomponents": {
+      "entry": [
+        "src/index.ts",
+        "**/*.stories.{ts,tsx}",
+        "**/*.test.{ts,tsx}",
+        ".storybook/main.ts",
+        ".storybook/preview.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "stories/**/*.{ts,tsx}", ".storybook/**/*.ts"]
+    }
+  },
+  "ignore": ["**/*.test.{ts,tsx}", "**/*.stories.{ts,tsx}"],
+  "ignoreDependencies": [
+    "@vitejs/plugin-react",
+    "@sveltejs/vite-plugin-svelte",
+    "@storybook/addon-vitest",
+    "@storybook/react",
+    "@storybook/svelte",
+    "@storybook/web-components",
+    "@vitest/coverage-v8",
+    "lit",
+    "vite"
+  ],
+  "ignoreExportsUsedInFile": true
+}

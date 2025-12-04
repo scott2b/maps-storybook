@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+.storybook-static
+storybook-static
+coverage
+.vite
+pnpm-lock.yaml
+package-lock.json

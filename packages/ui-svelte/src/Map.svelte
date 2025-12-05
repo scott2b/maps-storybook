@@ -62,30 +62,26 @@
     };
   });
 
-  // Listen to Ulysses events for state synchronization
-  $effect(() => {
-    if (!story) return;
-
-    // Subscribe to step changes
-    const unsubscribe = story.on('step', (event: { detail: { index: number } }) => {
-      currentStep = event.detail.index;
-    });
-
-    // Return cleanup function
-    return unsubscribe;
-  });
-
-  // Handlers simply call Ulysses methods - events handle state updates
+  // Handlers call Ulysses methods and update state directly
   function handleNext() {
-    story?.next();
+    if (story) {
+      story.next();
+      currentStep = story.current || 0;
+    }
   }
 
   function handlePrevious() {
-    story?.previous();
+    if (story) {
+      story.previous();
+      currentStep = story.current || 0;
+    }
   }
 
   function handleStep(index: number) {
-    story?.step(index);
+    if (story) {
+      story.step(index);
+      currentStep = story.current || 0;
+    }
   }
 
   // Update total steps when steps prop changes

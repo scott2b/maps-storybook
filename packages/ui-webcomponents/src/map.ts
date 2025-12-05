@@ -143,7 +143,6 @@ export class DesignMap extends LitElement {
 
   private map: mapboxgl.Map | null = null;
   private story: Ulysses | null = null;
-  private unsubscribeFromStory: (() => void) | null = null;
 
   updated(changedProperties: Map<string, unknown>) {
     super.updated(changedProperties);
@@ -156,11 +155,9 @@ export class DesignMap extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.unsubscribeFromStory?.();
     this.map?.remove();
     this.map = null;
     this.story = null;
-    this.unsubscribeFromStory = null;
   }
 
   private _initializeMap() {
@@ -168,11 +165,9 @@ export class DesignMap extends LitElement {
 
     // Clean up existing map
     if (this.map) {
-      this.unsubscribeFromStory?.();
       this.map.remove();
       this.map = null;
       this.story = null;
-      this.unsubscribeFromStory = null;
     }
 
     // Set the access token
@@ -196,38 +191,51 @@ export class DesignMap extends LitElement {
 
         // Initialize current step from Ulysses
         this.currentStep = this.story.current || 0;
-
-        // Listen to Ulysses events for state synchronization
-        this.unsubscribeFromStory = this.story.on(
-          'step',
-          (event: { detail: { index: number } }) => {
-            this.currentStep = event.detail.index;
-
-            // Dispatch custom event for external listeners
-            this.dispatchEvent(
-              new CustomEvent('step-change', {
-                detail: { step: this.currentStep },
-                bubbles: true,
-                composed: true,
-              })
-            );
-          }
-        );
       }
     });
   }
 
-  // Handlers simply call Ulysses methods - events handle state updates
+  // Handlers call Ulysses methods and update state directly
   private _handleNext() {
-    this.story?.next();
+    if (this.story) {
+      this.story.next();
+      this.currentStep = this.story.current || 0;
+      this.dispatchEvent(
+        new CustomEvent('step-change', {
+          detail: { step: this.currentStep },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    }
   }
 
   private _handlePrevious() {
-    this.story?.previous();
+    if (this.story) {
+      this.story.previous();
+      this.currentStep = this.story.current || 0;
+      this.dispatchEvent(
+        new CustomEvent('step-change', {
+          detail: { step: this.currentStep },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    }
   }
 
   private _handleStep(index: number) {
-    this.story?.step(index);
+    if (this.story) {
+      this.story.step(index);
+      this.currentStep = this.story.current || 0;
+      this.dispatchEvent(
+        new CustomEvent('step-change', {
+          detail: { step: this.currentStep },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    }
   }
 
   render() {

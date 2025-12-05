@@ -39,9 +39,6 @@ export function Map({
 
     mapRef.current = map;
 
-    // Track the unsubscribe function for cleanup
-    let unsubscribeFromStory: (() => void) | null = null;
-
     // Initialize Ulysses story when map loads
     map.on('load', () => {
       const story = new Ulysses({
@@ -52,33 +49,36 @@ export function Map({
       storyRef.current = story;
       // Initialize current step from Ulysses
       setCurrentStep(story.current || 0);
-
-      // Listen to Ulysses events for state synchronization
-      unsubscribeFromStory = story.on('step', (event: { detail: { index: number } }) => {
-        setCurrentStep(event.detail.index);
-      });
     });
 
     // Cleanup on unmount
     return () => {
-      unsubscribeFromStory?.();
       map.remove();
       mapRef.current = null;
       storyRef.current = null;
     };
   }, [accessToken, steps, initialStyle, initialCenter, initialZoom]);
 
-  // Handlers simply call Ulysses methods - events handle state updates
+  // Handlers call Ulysses methods and update state directly
   const handleNext = () => {
-    storyRef.current?.next();
+    if (storyRef.current) {
+      storyRef.current.next();
+      setCurrentStep(storyRef.current.current || 0);
+    }
   };
 
   const handlePrevious = () => {
-    storyRef.current?.previous();
+    if (storyRef.current) {
+      storyRef.current.previous();
+      setCurrentStep(storyRef.current.current || 0);
+    }
   };
 
   const handleStep = (index: number) => {
-    storyRef.current?.step(index);
+    if (storyRef.current) {
+      storyRef.current.step(index);
+      setCurrentStep(storyRef.current.current || 0);
+    }
   };
 
   const currentStepData = steps.features[currentStep] || steps.features[0];

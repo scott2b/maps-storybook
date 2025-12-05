@@ -7,6 +7,7 @@
   let {
     accessToken,
     steps,
+    actions,
     initialStyle = 'mapbox://styles/mapbox/dark-v11',
     initialCenter = [-122.4194, 37.7749] as [number, number],
     initialZoom = 12,
@@ -47,6 +48,7 @@
         story = new Ulysses({
           map,
           steps,
+          actions,
         });
 
         // Initialize current step from Ulysses

@@ -2,7 +2,7 @@ import { LitElement, html, css, unsafeCSS } from 'lit';
 import { customElement, property, state, query } from 'lit/decorators.js';
 import mapboxgl from 'mapbox-gl';
 import Ulysses from 'ulysses-js';
-import { type MapStorySteps, colors } from '@design/ui-core';
+import { type MapStorySteps, type MapAction, colors } from '@design/ui-core';
 
 @customElement('design-map')
 export class DesignMap extends LitElement {
@@ -126,6 +126,9 @@ export class DesignMap extends LitElement {
   @property({ type: Object })
   steps: MapStorySteps = { type: 'FeatureCollection', features: [] };
 
+  @property({ type: Object })
+  actions?: Record<string, MapAction>;
+
   @property({ type: String, attribute: 'initial-style' })
   initialStyle = 'mapbox://styles/mapbox/dark-v11';
 
@@ -187,6 +190,7 @@ export class DesignMap extends LitElement {
         this.story = new Ulysses({
           map: this.map,
           steps: this.steps,
+          actions: this.actions,
         });
 
         // Initialize current step from Ulysses

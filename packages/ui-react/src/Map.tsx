@@ -12,6 +12,7 @@ export interface ReactMapProps extends MapProps {
 export function Map({
   accessToken,
   steps,
+  actions,
   initialStyle = 'mapbox://styles/mapbox/dark-v11',
   initialCenter = [-122.4194, 37.7749],
   initialZoom = 12,
@@ -44,6 +45,7 @@ export function Map({
       const story = new Ulysses({
         map,
         steps,
+        actions,
       });
 
       storyRef.current = story;
@@ -57,7 +59,7 @@ export function Map({
       mapRef.current = null;
       storyRef.current = null;
     };
-  }, [accessToken, steps, initialStyle, initialCenter, initialZoom]);
+  }, [accessToken, steps, actions, initialStyle, initialCenter, initialZoom]);
 
   // Handlers call Ulysses methods and update state directly
   const handleNext = () => {

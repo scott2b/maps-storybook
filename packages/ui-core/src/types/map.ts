@@ -47,6 +47,7 @@ export interface UlyssesConfig {
 export interface MapProps {
   accessToken: string;
   steps: MapStorySteps;
+  actions?: Record<string, MapAction>;
   initialStyle?: string;
   initialCenter?: [number, number];
   initialZoom?: number;

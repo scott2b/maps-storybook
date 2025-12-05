@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/svelte';
-import type { Map as MapboxMap } from 'mapbox-gl';
+import mapboxgl, { type Map as MapboxMap } from 'mapbox-gl';
 import type { MapStoryStep } from '@design/ui-core';
 import Map from '../src/Map.svelte';
 import { createSampleStory } from '@design/ui-core';
@@ -138,6 +138,18 @@ export const CustomActions: Story = {
             radius: 500,
           },
         },
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [-122.4230, 37.8267],
+          },
+          properties: {
+            title: 'Alcatraz Island',
+            description: 'Showing a custom popup with rich HTML content.',
+            action: 'showPopup',
+          },
+        },
       ],
     },
     actions: {
@@ -262,6 +274,29 @@ export const CustomActions: Story = {
           });
         });
       },
+      showPopup: (map: MapboxMap, feature: MapStoryStep) => {
+        const coords = feature.geometry.coordinates as [number, number];
+
+        map.flyTo({
+          center: coords,
+          zoom: 14,
+          pitch: 0,
+          bearing: 0,
+          duration: 2000,
+        });
+
+        map.once('idle', () => {
+          new mapboxgl.Popup({ closeOnClick: false })
+            .setLngLat(coords)
+            .setHTML(
+              `<div style="padding: 8px;">
+                <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">Alcatraz Island</h3>
+                <p style="margin: 0; font-size: 14px;">Famous federal prison from 1934-1963. Now a popular tourist destination.</p>
+              </div>`
+            )
+            .addTo(map);
+        });
+      },
     },
     initialStyle: 'mapbox://styles/mapbox/dark-v11',
     initialCenter: [-122.4194, 37.7749],
@@ -271,7 +306,7 @@ export const CustomActions: Story = {
     docs: {
       description: {
         story:
-          'Demonstrates truly custom Ulysses actions that go beyond built-in capabilities:\n\n- **3D buildings layer**: Dynamically adds a 3D extrusion layer with tilt/rotation\n- **Style switching**: Changes map style mid-story from dark to satellite\n- **Custom geometry**: Draws a circle radius that isn\'t a GeoJSON feature',
+          'Demonstrates truly custom Ulysses actions that go beyond built-in capabilities:\n\n- **3D buildings layer**: Dynamically adds a 3D extrusion layer with tilt/rotation\n- **Style switching**: Changes map style mid-story from dark to satellite\n- **Custom geometry**: Draws a circle radius that isn\'t a GeoJSON feature\n- **Rich popups**: Displays custom HTML popup with formatted content',
       },
     },
   },

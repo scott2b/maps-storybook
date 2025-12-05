@@ -131,7 +131,7 @@ export class DesignUlyssesMap extends LitElement {
   actions?: Record<string, MapAction>;
 
   @property({ type: String, attribute: 'initial-style' })
-  initialStyle = 'mapbox://styles/mapbox/dark-v11';
+  initialStyle?: string;
 
   @property({ type: Array, attribute: 'initial-center' })
   initialCenter: [number, number] = [-122.4194, 37.7749];
@@ -173,14 +173,16 @@ export class DesignUlyssesMap extends LitElement {
     ],
   };
 
+  firstUpdated() {
+    // Initialize map after first render when DOM is ready
+    this._initializeMap();
+  }
+
   updated(changedProperties: Map<string, unknown>) {
     super.updated(changedProperties);
 
     // Re-initialize map when accessToken or mapLibrary changes
-    if (
-      (changedProperties.has('accessToken') && this.accessToken) ||
-      (changedProperties.has('mapLibrary') && this.mapContainer)
-    ) {
+    if (changedProperties.has('accessToken') || changedProperties.has('mapLibrary')) {
       this._initializeMap();
     }
   }

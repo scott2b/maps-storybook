@@ -139,7 +139,7 @@
   .map-container {
     position: relative;
     width: 100%;
-    height: 600px;
+    height: 100vh;
     border-radius: 0.5rem;
     overflow: hidden;
   }
@@ -154,6 +154,7 @@
     bottom: 0;
     left: 0;
     right: 0;
+    z-index: 10;
     background: linear-gradient(
       to top,
       var(--surface-color, #020617) 0%,

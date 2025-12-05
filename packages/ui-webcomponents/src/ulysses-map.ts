@@ -4,8 +4,8 @@ import mapboxgl from 'mapbox-gl';
 import Ulysses from 'ulysses-js';
 import { type MapStorySteps, type MapAction, colors } from '@design/ui-core';
 
-@customElement('design-map')
-export class DesignMap extends LitElement {
+@customElement('design-ulysses-map')
+export class DesignUlyssesMap extends LitElement {
   static styles = css`
     :host {
       display: block;
@@ -402,6 +402,6 @@ export class DesignMap extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'design-map': DesignMap;
+    'design-ulysses-map': DesignUlyssesMap;
   }
 }

@@ -3,12 +3,12 @@ import { html } from 'lit';
 import mapboxgl, { type Map as MapboxMap } from 'mapbox-gl';
 import type { MapStoryStep } from '@design/ui-core';
 import { createSampleStory } from '@design/ui-core';
-import '../src/map';
+import '../src/ulysses-map';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 const meta = {
-  title: 'Web Components/Map',
-  component: 'design-map',
+  title: 'Web Components/UlyssesMap',
+  component: 'design-ulysses-map',
   tags: ['autodocs'],
   argTypes: {
     accessToken: {
@@ -72,13 +72,13 @@ export const SanFranciscoTour: Story = {
     initialZoom: 12,
   },
   render: (args) => html`
-    <design-map
+    <design-ulysses-map
       access-token=${args.accessToken}
       .steps=${args.steps}
       initial-style=${args.initialStyle}
       .initialCenter=${args.initialCenter}
       initial-zoom=${args.initialZoom}
-    ></design-map>
+    ></design-ulysses-map>
   `,
   parameters: {
     docs: {
@@ -99,13 +99,13 @@ export const CustomStyle: Story = {
     initialZoom: 11,
   },
   render: (args) => html`
-    <design-map
+    <design-ulysses-map
       access-token=${args.accessToken}
       .steps=${args.steps}
       initial-style=${args.initialStyle}
       .initialCenter=${args.initialCenter}
       initial-zoom=${args.initialZoom}
-    ></design-map>
+    ></design-ulysses-map>
   `,
   parameters: {
     docs: {
@@ -328,14 +328,14 @@ export const CustomActions: Story = {
     initialZoom: 12,
   },
   render: (args) => html`
-    <design-map
+    <design-ulysses-map
       access-token=${args.accessToken}
       .steps=${args.steps}
       .actions=${args.actions}
       initial-style=${args.initialStyle}
       .initialCenter=${args.initialCenter}
       initial-zoom=${args.initialZoom}
-    ></design-map>
+    ></design-ulysses-map>
   `,
   parameters: {
     docs: {

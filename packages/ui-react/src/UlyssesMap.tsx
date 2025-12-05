@@ -3,13 +3,13 @@ import mapboxgl from 'mapbox-gl';
 import Ulysses from 'ulysses-js';
 import type { MapProps } from '@design/ui-core';
 import { colors } from '@design/ui-core';
-import './Map.css';
+import './UlyssesMap.css';
 
-export interface ReactMapProps extends MapProps {
+export interface UlyssesMapProps extends MapProps {
   className?: string;
 }
 
-export function Map({
+export function UlyssesMap({
   accessToken,
   steps,
   actions,
@@ -17,7 +17,7 @@ export function Map({
   initialCenter = [-122.4194, 37.7749],
   initialZoom = 12,
   className,
-}: ReactMapProps) {
+}: UlyssesMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const storyRef = useRef<Ulysses | null>(null);

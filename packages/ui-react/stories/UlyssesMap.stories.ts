@@ -1,13 +1,13 @@
-import type { Meta, StoryObj } from '@storybook/svelte';
+import type { Meta, StoryObj } from '@storybook/react';
 import mapboxgl, { type Map as MapboxMap } from 'mapbox-gl';
 import type { MapStoryStep } from '@design/ui-core';
-import Map from '../src/Map.svelte';
+import { UlyssesMap } from '../src/UlyssesMap';
 import { createSampleStory } from '@design/ui-core';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 const meta = {
-  title: 'Svelte/Map',
-  component: Map,
+  title: 'React/UlyssesMap',
+  component: UlyssesMap,
   tags: ['autodocs'],
   argTypes: {
     accessToken: {
@@ -55,7 +55,7 @@ The placeholder token in these stories will NOT work - you must replace it with 
       },
     },
   },
-} satisfies Meta<Map>;
+} satisfies Meta<typeof UlyssesMap>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

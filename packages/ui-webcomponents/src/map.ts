@@ -143,6 +143,7 @@ export class DesignMap extends LitElement {
 
   private map: mapboxgl.Map | null = null;
   private story: Ulysses | null = null;
+  private unsubscribeFromStory: (() => void) | null = null;
 
   updated(changedProperties: Map<string, unknown>) {
     super.updated(changedProperties);
@@ -155,9 +156,11 @@ export class DesignMap extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this.unsubscribeFromStory?.();
     this.map?.remove();
     this.map = null;
     this.story = null;
+    this.unsubscribeFromStory = null;
   }
 
   private _initializeMap() {
@@ -165,9 +168,11 @@ export class DesignMap extends LitElement {
 
     // Clean up existing map
     if (this.map) {
+      this.unsubscribeFromStory?.();
       this.map.remove();
       this.map = null;
       this.story = null;
+      this.unsubscribeFromStory = null;
     }
 
     // Set the access token
@@ -189,56 +194,44 @@ export class DesignMap extends LitElement {
           steps: this.steps,
         });
 
+        // Initialize current step from Ulysses
         this.currentStep = this.story.current || 0;
+
+        // Listen to Ulysses events for state synchronization
+        this.unsubscribeFromStory = this.story.on(
+          'step',
+          (event: { detail: { index: number } }) => {
+            this.currentStep = event.detail.index;
+
+            // Dispatch custom event for external listeners
+            this.dispatchEvent(
+              new CustomEvent('step-change', {
+                detail: { step: this.currentStep },
+                bubbles: true,
+                composed: true,
+              })
+            );
+          }
+        );
       }
     });
   }
 
+  // Handlers simply call Ulysses methods - events handle state updates
   private _handleNext() {
-    if (this.story) {
-      this.story.next();
-      this.currentStep = this.story.current || 0;
-      this.dispatchEvent(
-        new CustomEvent('step-change', {
-          detail: { step: this.currentStep },
-          bubbles: true,
-          composed: true,
-        })
-      );
-    }
+    this.story?.next();
   }
 
   private _handlePrevious() {
-    if (this.story) {
-      this.story.previous();
-      this.currentStep = this.story.current || 0;
-      this.dispatchEvent(
-        new CustomEvent('step-change', {
-          detail: { step: this.currentStep },
-          bubbles: true,
-          composed: true,
-        })
-      );
-    }
+    this.story?.previous();
   }
 
   private _handleStep(index: number) {
-    if (this.story) {
-      this.story.step(index);
-      this.currentStep = this.story.current || 0;
-      this.dispatchEvent(
-        new CustomEvent('step-change', {
-          detail: { step: this.currentStep },
-          bubbles: true,
-          composed: true,
-        })
-      );
-    }
+    this.story?.step(index);
   }
 
   render() {
-    const currentStepData =
-      this.steps.features[this.currentStep] || this.steps.features[0];
+    const currentStepData = this.steps.features[this.currentStep] || this.steps.features[0];
     const totalSteps = this.steps.features.length;
 
     return html`
@@ -352,14 +345,10 @@ export class DesignMap extends LitElement {
         <div class="controls">
           <div class="step-info">
             ${currentStepData?.properties?.title
-              ? html`<h3 class="step-title">
-                  ${currentStepData.properties.title}
-                </h3>`
+              ? html`<h3 class="step-title">${currentStepData.properties.title}</h3>`
               : ''}
             ${currentStepData?.properties?.description
-              ? html`<p class="step-description">
-                  ${currentStepData.properties.description}
-                </p>`
+              ? html`<p class="step-description">${currentStepData.properties.description}</p>`
               : ''}
           </div>
 
@@ -377,9 +366,7 @@ export class DesignMap extends LitElement {
                 (_, index) => html`
                   <button
                     @click=${() => this._handleStep(index)}
-                    class="step-dot ${index === this.currentStep
-                      ? 'active'
-                      : ''}"
+                    class="step-dot ${index === this.currentStep ? 'active' : ''}"
                     aria-label="Go to step ${index + 1}"
                   ></button>
                 `

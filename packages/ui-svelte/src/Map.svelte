@@ -49,7 +49,7 @@
           steps,
         });
 
-        // Update current step tracker
+        // Initialize current step from Ulysses
         currentStep = story.current || 0;
       }
     });
@@ -62,35 +62,38 @@
     };
   });
 
+  // Listen to Ulysses events for state synchronization
+  $effect(() => {
+    if (!story) return;
+
+    // Subscribe to step changes
+    const unsubscribe = story.on('step', (event: { detail: { index: number } }) => {
+      currentStep = event.detail.index;
+    });
+
+    // Return cleanup function
+    return unsubscribe;
+  });
+
+  // Handlers simply call Ulysses methods - events handle state updates
   function handleNext() {
-    if (story) {
-      story.next();
-      currentStep = story.current || 0;
-    }
+    story?.next();
   }
 
   function handlePrevious() {
-    if (story) {
-      story.previous();
-      currentStep = story.current || 0;
-    }
+    story?.previous();
   }
 
   function handleStep(index: number) {
-    if (story) {
-      story.step(index);
-      currentStep = story.current || 0;
-    }
+    story?.step(index);
   }
 
-  // Get current step details
+  // Update total steps when steps prop changes
   $effect(() => {
     totalSteps = steps.features.length;
   });
 
-  const currentStepData = $derived(
-    steps.features[currentStep] || steps.features[0]
-  );
+  const currentStepData = $derived(steps.features[currentStep] || steps.features[0]);
 </script>
 
 <div
@@ -110,11 +113,7 @@
     </div>
 
     <div class="navigation">
-      <button
-        onclick={handlePrevious}
-        disabled={currentStep === 0}
-        class="nav-button"
-      >
+      <button onclick={handlePrevious} disabled={currentStep === 0} class="nav-button">
         Previous
       </button>
 
@@ -129,11 +128,7 @@
         {/each}
       </div>
 
-      <button
-        onclick={handleNext}
-        disabled={currentStep >= totalSteps - 1}
-        class="nav-button"
-      >
+      <button onclick={handleNext} disabled={currentStep >= totalSteps - 1} class="nav-button">
         Next
       </button>
     </div>

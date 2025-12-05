@@ -122,21 +122,13 @@ const customActionsSteps = {
     {
       type: 'Feature' as const,
       geometry: {
-        type: 'Polygon' as const,
-        coordinates: [
-          [
-            [-122.4353, 37.7749],
-            [-122.4053, 37.7749],
-            [-122.4053, 37.7949],
-            [-122.4353, 37.7949],
-            [-122.4353, 37.7749],
-          ],
-        ],
+        type: 'Point' as const,
+        coordinates: [-122.4194, 37.7749],
       },
       properties: {
-        title: 'Financial District',
-        description: 'Using fitBounds to frame a neighborhood polygon.',
-        action: 'fitBounds',
+        title: 'Downtown San Francisco',
+        description: 'Enabling 3D buildings layer to see the skyline.',
+        action: 'enable3D',
       },
     },
     {
@@ -147,42 +139,146 @@ const customActionsSteps = {
       },
       properties: {
         title: 'Golden Gate Bridge',
-        description: 'Custom action adds a popup marker.',
-        action: 'showPopup',
+        description: 'Switching to satellite view to see terrain.',
+        action: 'switchToSatellite',
       },
     },
     {
       type: 'Feature' as const,
       geometry: {
         type: 'Point' as const,
-        coordinates: [-122.4194, 37.7749],
+        coordinates: [-122.4177, 37.8099],
       },
       properties: {
-        title: 'Union Square',
-        description: 'Standard flyTo action with custom zoom level.',
-        action: 'flyTo',
-        zoom: 15,
+        title: 'Presidio',
+        description: 'Drawing a 500m radius circle around the Presidio.',
+        action: 'drawCircle',
+        radius: 500,
       },
     },
   ],
 };
 
 const customActionsMap = {
-  showPopup: (map: MapboxMap, feature: MapStoryStep) => {
+  enable3D: (map: MapboxMap, feature: MapStoryStep) => {
     const coords = feature.geometry.coordinates as [number, number];
 
-    // Import mapboxgl dynamically from the already-loaded instance
-    import('mapbox-gl').then((mapboxgl) => {
-      new mapboxgl.Popup()
-        .setLngLat(coords)
-        .setHTML(`<h3>${feature.properties.title}</h3><p>${feature.properties.description}</p>`)
-        .addTo(map);
+    map.flyTo({
+      center: coords,
+      zoom: 16,
+      pitch: 60,
+      bearing: -17.6,
+      duration: 3000,
     });
+
+    // Wait for map to load style layers
+    map.once('idle', () => {
+      // Add 3D buildings layer if it doesn't exist
+      if (!map.getLayer('3d-buildings')) {
+        const layers = map.getStyle().layers;
+        const labelLayerId = layers?.find(
+          (layer) => layer.type === 'symbol' && layer.layout?.['text-field']
+        )?.id;
+
+        map.addLayer(
+          {
+            id: '3d-buildings',
+            source: 'composite',
+            'source-layer': 'building',
+            filter: ['==', 'extrude', 'true'],
+            type: 'fill-extrusion',
+            minzoom: 15,
+            paint: {
+              'fill-extrusion-color': '#aaa',
+              'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'height']],
+              'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'min_height']],
+              'fill-extrusion-opacity': 0.6,
+            },
+          },
+          labelLayerId
+        );
+      }
+    });
+  },
+  switchToSatellite: (map: MapboxMap, feature: MapStoryStep) => {
+    const coords = feature.geometry.coordinates as [number, number];
+
+    // Change map style to satellite
+    map.setStyle('mapbox://styles/mapbox/satellite-v9');
+
+    // Fly to location after style loads
+    map.once('style.load', () => {
+      map.flyTo({
+        center: coords,
+        zoom: 15,
+        pitch: 0,
+        bearing: 0,
+        duration: 3000,
+      });
+    });
+  },
+  drawCircle: (map: MapboxMap, feature: MapStoryStep) => {
+    const coords = feature.geometry.coordinates as [number, number];
+    const radiusInMeters = feature.properties.radius || 500;
 
     map.flyTo({
       center: coords,
       zoom: 14,
+      pitch: 0,
       duration: 2000,
+    });
+
+    map.once('idle', () => {
+      // Remove existing circle if it exists
+      if (map.getSource('circle-source')) {
+        map.removeLayer('circle-layer');
+        map.removeSource('circle-source');
+      }
+
+      // Create circle using turf.js approximation
+      const steps = 64;
+      const coordinates = [];
+      for (let i = 0; i < steps; i++) {
+        const angle = (i / steps) * 2 * Math.PI;
+        const dx = radiusInMeters * Math.cos(angle);
+        const dy = radiusInMeters * Math.sin(angle);
+        const lon = coords[0] + (dx / 111320);
+        const lat = coords[1] + (dy / 110540);
+        coordinates.push([lon, lat]);
+      }
+      coordinates.push(coordinates[0]); // Close the circle
+
+      map.addSource('circle-source', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [coordinates],
+          },
+          properties: {},
+        },
+      });
+
+      map.addLayer({
+        id: 'circle-layer',
+        type: 'fill',
+        source: 'circle-source',
+        paint: {
+          'fill-color': '#0f766e',
+          'fill-opacity': 0.3,
+        },
+      });
+
+      map.addLayer({
+        id: 'circle-outline',
+        type: 'line',
+        source: 'circle-source',
+        paint: {
+          'line-color': '#0f766e',
+          'line-width': 2,
+        },
+      });
     });
   },
 };
@@ -210,7 +306,7 @@ export const CustomActions: Story = {
     docs: {
       description: {
         story:
-          'Demonstrates advanced Ulysses features:\n\n- **Polygon geometry** with `fitBounds` action\n- **Custom actions** that create popups\n- **Mixed geometry types** (polygons and points)\n- **Property-based parameters** (custom zoom levels)',
+          'Demonstrates truly custom Ulysses actions that go beyond built-in capabilities:\n\n- **3D buildings layer**: Dynamically adds a 3D extrusion layer with tilt/rotation\n- **Style switching**: Changes map style mid-story from dark to satellite\n- **Custom geometry**: Draws a circle radius that isn\'t a GeoJSON feature',
       },
     },
   },

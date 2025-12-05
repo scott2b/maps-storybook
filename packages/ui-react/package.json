@@ -11,7 +11,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@design/ui-core": "workspace:*"
+    "@design/ui-core": "workspace:*",
+    "mapbox-gl": "^3.17.0",
+    "ulysses-js": "^1.5.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",

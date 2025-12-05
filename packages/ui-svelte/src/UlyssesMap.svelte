@@ -1,5 +1,6 @@
 <script lang="ts">
   import mapboxgl from 'mapbox-gl';
+  import maplibregl from 'maplibre-gl';
   import Ulysses from 'ulysses-js';
   import type { MapProps } from '@design/ui-core';
   import { colors } from '@design/ui-core';
@@ -8,24 +9,44 @@
     accessToken,
     steps,
     actions,
-    initialStyle = 'mapbox://styles/mapbox/dark-v11',
+    initialStyle,
     initialCenter = [-122.4194, 37.7749] as [number, number],
     initialZoom = 12,
+    mapLibrary = 'mapbox',
   }: MapProps = $props();
+
+  // Simple OSM raster style for MapLibre (no API key needed)
+  const osmRasterStyle = {
+    version: 8,
+    sources: {
+      'osm-tiles': {
+        type: 'raster',
+        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        attribution: '© OpenStreetMap contributors',
+      },
+    },
+    layers: [
+      {
+        id: 'osm-tiles',
+        type: 'raster',
+        source: 'osm-tiles',
+        minzoom: 0,
+        maxzoom: 19,
+      },
+    ],
+  };
 
   // eslint-disable-next-line no-undef
   let mapContainer: HTMLDivElement;
-  let map: mapboxgl.Map | null = null;
+  let map: mapboxgl.Map | maplibregl.Map | null = null;
   let story: Ulysses | null = null;
   let currentStep = $state(0);
   let totalSteps = $state(steps.features.length);
 
-  // Initialize map when container is ready and token changes
+  // Initialize map when container is ready
   $effect(() => {
-    if (!mapContainer || !accessToken) return;
-
-    // Set the access token
-    mapboxgl.accessToken = accessToken;
+    if (!mapContainer) return;
 
     // Clean up existing map
     if (map) {
@@ -34,19 +55,34 @@
       story = null;
     }
 
-    // Initialize the map
-    map = new mapboxgl.Map({
-      container: mapContainer,
-      style: initialStyle,
-      center: initialCenter,
-      zoom: initialZoom,
-    });
+    // Initialize the map based on library choice
+    if (mapLibrary === 'maplibre') {
+      // Use MapLibre GL
+      map = new maplibregl.Map({
+        container: mapContainer,
+        style: initialStyle || osmRasterStyle,
+        center: initialCenter,
+        zoom: initialZoom,
+      });
+    } else {
+      // Use Mapbox GL (default)
+      if (accessToken) {
+        mapboxgl.accessToken = accessToken;
+      }
 
-    // Initialize Ulysses story
+      map = new mapboxgl.Map({
+        container: mapContainer,
+        style: initialStyle || 'mapbox://styles/mapbox/dark-v11',
+        center: initialCenter,
+        zoom: initialZoom,
+      });
+    }
+
+    // Initialize Ulysses story when map loads
     map.on('load', () => {
       if (map) {
         story = new Ulysses({
-          map,
+          map: map as any, // Ulysses works with both Mapbox GL and MapLibre GL
           steps,
           actions,
         });

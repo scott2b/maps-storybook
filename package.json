@@ -49,5 +49,9 @@
     "typescript-eslint": "^8.48.1",
     "vite": "^7.0.0",
     "wait-on": "^9.0.3"
+  },
+  "dependencies": {
+    "maplibre-gl": "^5.14.0",
+    "pmtiles": "^4.3.0"
   }
 }

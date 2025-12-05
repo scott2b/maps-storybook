@@ -1,9 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import mapboxgl, { type Map as MapboxMap } from 'mapbox-gl';
+import maplibregl, { type Map as MapLibreMap } from 'maplibre-gl';
 import type { MapStoryStep } from '@design/ui-core';
 import { UlyssesMap } from '../src/UlyssesMap';
 import { createSampleStory } from '@design/ui-core';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 const meta = {
   title: 'React/UlyssesMap',
@@ -307,6 +309,123 @@ export const CustomActions: Story = {
       description: {
         story:
           'Demonstrates truly custom Ulysses actions that go beyond built-in capabilities:\n\n- **3D buildings layer**: Dynamically adds a 3D extrusion layer with tilt/rotation\n- **Style switching**: Changes map style mid-story from dark to satellite\n- **Custom geometry**: Draws a circle radius that isn\'t a GeoJSON feature\n- **Rich popups**: Displays custom HTML popup with formatted content',
+      },
+    },
+  },
+};
+
+export const MapLibreWithOSM: Story = {
+  args: {
+    steps: createSampleStory(),
+    mapLibrary: 'maplibre',
+    initialCenter: [-122.4194, 37.7749],
+    initialZoom: 12,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Same San Francisco tour using **MapLibre GL** with **OpenStreetMap** tiles. No API key required! Proves that Ulysses works with any map library that implements the standard flyTo/fitBounds API.',
+      },
+    },
+  },
+};
+
+export const MapLibreCustomActions: Story = {
+  args: {
+    steps: {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [-122.4194, 37.7749],
+          },
+          properties: {
+            title: 'Downtown San Francisco',
+            description: 'Flying with custom camera angle using MapLibre.',
+            action: 'customFlyTo',
+          },
+        },
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [-122.4183, 37.8199],
+          },
+          properties: {
+            title: 'Golden Gate Bridge',
+            description: 'Rotating view with MapLibre GL.',
+            action: 'rotateView',
+          },
+        },
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [-122.4230, 37.8267],
+          },
+          properties: {
+            title: 'Alcatraz Island',
+            description: 'MapLibre popup demonstration.',
+            action: 'showPopup',
+          },
+        },
+      ],
+    },
+    actions: {
+      customFlyTo: (map: MapLibreMap, feature: MapStoryStep) => {
+        const coords = feature.geometry.coordinates as [number, number];
+        map.flyTo({
+          center: coords,
+          zoom: 14,
+          pitch: 45,
+          bearing: -17.6,
+          duration: 3000,
+        });
+      },
+      rotateView: (map: MapLibreMap, feature: MapStoryStep) => {
+        const coords = feature.geometry.coordinates as [number, number];
+        map.flyTo({
+          center: coords,
+          zoom: 15,
+          pitch: 60,
+          bearing: 135,
+          duration: 3000,
+        });
+      },
+      showPopup: (map: MapLibreMap, feature: MapStoryStep) => {
+        const coords = feature.geometry.coordinates as [number, number];
+        map.flyTo({
+          center: coords,
+          zoom: 14,
+          pitch: 0,
+          bearing: 0,
+          duration: 2000,
+        });
+        map.once('idle', () => {
+          new maplibregl.Popup({ closeOnClick: false })
+            .setLngLat(coords)
+            .setHTML(
+              `<div style="padding: 8px;">
+                <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">Alcatraz Island</h3>
+                <p style="margin: 0; font-size: 14px;">Rendered with MapLibre GL + OpenStreetMap. Ulysses works!</p>
+              </div>`
+            )
+            .addTo(map);
+        });
+      },
+    },
+    mapLibrary: 'maplibre',
+    initialCenter: [-122.4194, 37.7749],
+    initialZoom: 12,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Custom actions with MapLibre GL:\n\n- **Custom flyTo**: Camera angles with pitch and bearing\n- **Rotate view**: Dynamic camera rotation\n- **Popups**: MapLibre GL popups (API-compatible with Mapbox GL)',
       },
     },
   },

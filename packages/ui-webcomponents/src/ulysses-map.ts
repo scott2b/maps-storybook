@@ -1,6 +1,7 @@
 import { LitElement, html, css, unsafeCSS } from 'lit';
 import { customElement, property, state, query } from 'lit/decorators.js';
 import mapboxgl from 'mapbox-gl';
+import maplibregl from 'maplibre-gl';
 import Ulysses from 'ulysses-js';
 import { type MapStorySteps, type MapAction, colors } from '@design/ui-core';
 
@@ -138,20 +139,48 @@ export class DesignUlyssesMap extends LitElement {
   @property({ type: Number, attribute: 'initial-zoom' })
   initialZoom = 12;
 
+  @property({ type: String, attribute: 'map-library' })
+  mapLibrary: 'mapbox' | 'maplibre' = 'mapbox';
+
   @state()
   private currentStep = 0;
 
   @query('.map')
   private mapContainer!: HTMLDivElement;
 
-  private map: mapboxgl.Map | null = null;
+  private map: mapboxgl.Map | maplibregl.Map | null = null;
   private story: Ulysses | null = null;
+
+  // Simple OSM raster style for MapLibre (no API key needed)
+  private osmRasterStyle = {
+    version: 8,
+    sources: {
+      'osm-tiles': {
+        type: 'raster',
+        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        attribution: '© OpenStreetMap contributors',
+      },
+    },
+    layers: [
+      {
+        id: 'osm-tiles',
+        type: 'raster',
+        source: 'osm-tiles',
+        minzoom: 0,
+        maxzoom: 19,
+      },
+    ],
+  };
 
   updated(changedProperties: Map<string, unknown>) {
     super.updated(changedProperties);
 
-    // Re-initialize map when accessToken changes
-    if (changedProperties.has('accessToken') && this.accessToken) {
+    // Re-initialize map when accessToken or mapLibrary changes
+    if (
+      (changedProperties.has('accessToken') && this.accessToken) ||
+      (changedProperties.has('mapLibrary') && this.mapContainer)
+    ) {
       this._initializeMap();
     }
   }
@@ -164,7 +193,7 @@ export class DesignUlyssesMap extends LitElement {
   }
 
   private _initializeMap() {
-    if (!this.mapContainer || !this.accessToken) return;
+    if (!this.mapContainer) return;
 
     // Clean up existing map
     if (this.map) {
@@ -173,22 +202,34 @@ export class DesignUlyssesMap extends LitElement {
       this.story = null;
     }
 
-    // Set the access token
-    mapboxgl.accessToken = this.accessToken;
+    // Initialize the map based on library choice
+    if (this.mapLibrary === 'maplibre') {
+      // Use MapLibre GL
+      this.map = new maplibregl.Map({
+        container: this.mapContainer,
+        style: this.initialStyle || this.osmRasterStyle,
+        center: this.initialCenter,
+        zoom: this.initialZoom,
+      });
+    } else {
+      // Use Mapbox GL (default)
+      if (this.accessToken) {
+        mapboxgl.accessToken = this.accessToken;
+      }
 
-    // Initialize the map
-    this.map = new mapboxgl.Map({
-      container: this.mapContainer,
-      style: this.initialStyle,
-      center: this.initialCenter,
-      zoom: this.initialZoom,
-    });
+      this.map = new mapboxgl.Map({
+        container: this.mapContainer,
+        style: this.initialStyle || 'mapbox://styles/mapbox/dark-v11',
+        center: this.initialCenter,
+        zoom: this.initialZoom,
+      });
+    }
 
     // Initialize Ulysses story when map loads
     this.map.on('load', () => {
       if (this.map) {
         this.story = new Ulysses({
-          map: this.map,
+          map: this.map as any, // Ulysses works with both Mapbox GL and MapLibre GL
           steps: this.steps,
           actions: this.actions,
         });

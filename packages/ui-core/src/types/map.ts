@@ -45,11 +45,12 @@ export interface UlyssesConfig {
  * Props for Map components across frameworks
  */
 export interface MapProps {
-  accessToken: string;
+  accessToken?: string;
   steps: MapStorySteps;
   actions?: Record<string, MapAction>;
   initialStyle?: string;
   initialCenter?: [number, number];
   initialZoom?: number;
   className?: string;
+  mapLibrary?: 'mapbox' | 'maplibre';
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
+import maplibregl from 'maplibre-gl';
 import Ulysses from 'ulysses-js';
 import type { MapProps } from '@design/ui-core';
 import { colors } from '@design/ui-core';
@@ -9,17 +10,40 @@ export interface UlyssesMapProps extends MapProps {
   className?: string;
 }
 
+// Simple OSM raster style for MapLibre (no API key needed)
+const osmRasterStyle = {
+  version: 8,
+  sources: {
+    'osm-tiles': {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      attribution: '© OpenStreetMap contributors',
+    },
+  },
+  layers: [
+    {
+      id: 'osm-tiles',
+      type: 'raster',
+      source: 'osm-tiles',
+      minzoom: 0,
+      maxzoom: 19,
+    },
+  ],
+};
+
 export function UlyssesMap({
   accessToken,
   steps,
   actions,
-  initialStyle = 'mapbox://styles/mapbox/dark-v11',
+  initialStyle,
   initialCenter = [-122.4194, 37.7749],
   initialZoom = 12,
   className,
+  mapLibrary = 'mapbox',
 }: UlyssesMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapRef = useRef<mapboxgl.Map | maplibregl.Map | null>(null);
   const storyRef = useRef<Ulysses | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const totalSteps = steps.features.length;
@@ -27,29 +51,41 @@ export function UlyssesMap({
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    // Set the access token
-    mapboxgl.accessToken = accessToken;
+    let map: mapboxgl.Map | maplibregl.Map;
 
-    // Initialize the map
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: initialStyle,
-      center: initialCenter,
-      zoom: initialZoom,
-    });
+    if (mapLibrary === 'maplibre') {
+      // Use MapLibre GL
+      map = new maplibregl.Map({
+        container: mapContainerRef.current,
+        style: initialStyle || osmRasterStyle,
+        center: initialCenter as [number, number],
+        zoom: initialZoom,
+      });
+    } else {
+      // Use Mapbox GL (default)
+      if (accessToken) {
+        mapboxgl.accessToken = accessToken;
+      }
+
+      map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: initialStyle || 'mapbox://styles/mapbox/dark-v11',
+        center: initialCenter,
+        zoom: initialZoom,
+      });
+    }
 
     mapRef.current = map;
 
     // Initialize Ulysses story when map loads
     map.on('load', () => {
       const story = new Ulysses({
-        map,
+        map: map as any, // Ulysses works with both Mapbox GL and MapLibre GL
         steps,
         actions,
       });
 
       storyRef.current = story;
-      // Initialize current step from Ulysses
       setCurrentStep(story.current || 0);
     });
 
@@ -59,9 +95,8 @@ export function UlyssesMap({
       mapRef.current = null;
       storyRef.current = null;
     };
-  }, [accessToken, steps, actions, initialStyle, initialCenter, initialZoom]);
+  }, [accessToken, steps, actions, initialStyle, initialCenter, initialZoom, mapLibrary]);
 
-  // Handlers call Ulysses methods and update state directly
   const handleNext = () => {
     if (storyRef.current) {
       storyRef.current.next();

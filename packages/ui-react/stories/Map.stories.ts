@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import type { Map as MapboxMap } from 'mapbox-gl';
+import type { MapStoryStep } from '@design/ui-core';
 import { Map } from '../src/Map';
 import { createSampleStory } from '@design/ui-core';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -88,6 +90,92 @@ export const CustomStyle: Story = {
     docs: {
       description: {
         story: 'The same tour with a satellite map style.',
+      },
+    },
+  },
+};
+
+export const CustomActions: Story = {
+  args: {
+    accessToken: 'pk.eyJ1IjoibnVrbmlnaHRsYWIiLCJhIjoieUpRU1FOWSJ9.f7Z1min5DNfTPBIb7RbnGA',
+    steps: {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-122.4353, 37.7749],
+                [-122.4053, 37.7749],
+                [-122.4053, 37.7949],
+                [-122.4353, 37.7949],
+                [-122.4353, 37.7749],
+              ],
+            ],
+          },
+          properties: {
+            title: 'Financial District',
+            description: 'Using fitBounds to frame a neighborhood polygon.',
+            action: 'fitBounds',
+          },
+        },
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [-122.4183, 37.8199],
+          },
+          properties: {
+            title: 'Golden Gate Bridge',
+            description: 'Custom action adds a popup marker.',
+            action: 'showPopup',
+          },
+        },
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [-122.4194, 37.7749],
+          },
+          properties: {
+            title: 'Union Square',
+            description: 'Standard flyTo action with custom zoom level.',
+            action: 'flyTo',
+            zoom: 15,
+          },
+        },
+      ],
+    },
+    actions: {
+      showPopup: (map: MapboxMap, feature: MapStoryStep) => {
+        const coords = feature.geometry.coordinates as [number, number];
+
+        // Import mapboxgl dynamically from the already-loaded instance
+        import('mapbox-gl').then((mapboxgl) => {
+          new mapboxgl.Popup()
+            .setLngLat(coords)
+            .setHTML(`<h3>${feature.properties.title}</h3><p>${feature.properties.description}</p>`)
+            .addTo(map);
+        });
+
+        map.flyTo({
+          center: coords,
+          zoom: 14,
+          duration: 2000,
+        });
+      },
+    },
+    initialStyle: 'mapbox://styles/mapbox/dark-v11',
+    initialCenter: [-122.4194, 37.7749],
+    initialZoom: 12,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Demonstrates advanced Ulysses features:\n\n- **Polygon geometry** with `fitBounds` action\n- **Custom actions** that create popups\n- **Mixed geometry types** (polygons and points)\n- **Property-based parameters** (custom zoom levels)',
       },
     },
   },

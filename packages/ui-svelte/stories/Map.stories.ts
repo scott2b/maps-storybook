@@ -151,10 +151,14 @@ export const CustomActions: Story = {
     actions: {
       showPopup: (map: MapboxMap, feature: MapStoryStep) => {
         const coords = feature.geometry.coordinates as [number, number];
-        new (window as unknown as { mapboxgl: typeof import('mapbox-gl') }).mapboxgl.Popup()
-          .setLngLat(coords)
-          .setHTML(`<h3>${feature.properties.title}</h3><p>${feature.properties.description}</p>`)
-          .addTo(map);
+
+        // Import mapboxgl dynamically from the already-loaded instance
+        import('mapbox-gl').then((mapboxgl) => {
+          new mapboxgl.Popup()
+            .setLngLat(coords)
+            .setHTML(`<h3>${feature.properties.title}</h3><p>${feature.properties.description}</p>`)
+            .addTo(map);
+        });
 
         map.flyTo({
           center: coords,
